@@ -3,6 +3,7 @@ package cg
 import (
 	"encoding/json"
 	"errors"
+	// "fmt"
 	"gameserver/ipc"
 )
 
@@ -11,12 +12,20 @@ type CenterClient struct {
 }
 
 func (client *CenterClient) AddPlayer(player *Player) error {
+
+	arr_PlayerList, _ := client.ListPlayer("")
+	for _, slice_Player := range arr_PlayerList {
+		if slice_Player.Name == player.Name {
+			return errors.New("Player Is Online")
+		}
+	}
+
 	b, err := json.Marshal(*player)
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Call("addplayerplayer", string(b))
+	resp, err := client.Call("addplayer", string(b))
 	if err == nil && resp.Code == "200" {
 		return nil
 	}
@@ -24,24 +33,25 @@ func (client *CenterClient) AddPlayer(player *Player) error {
 }
 
 func (client *CenterClient) RemovePlayer(name string) error {
-	ret, _ := client.Call("RemovePlayer", name)
+	ret, _ := client.Call("removeplayer", name)
 	if ret.Code == "200" {
 		return nil
 	}
 	return errors.New(ret.Code)
 }
 
-func (client *CenterClient) listPlayer(params string) (ps []*Player, err error) {
-	resp, _ := client.Call("listPlayer", params)
+func (client *CenterClient) ListPlayer(params string) (ps []*Player, err error) {
+	resp, _ := client.Call("listplayer", params)
 	if resp.Code != "200" {
 		err = errors.New(resp.Code)
+	} else {
+		err = json.Unmarshal([]byte(resp.Body), &ps)
 	}
-	err = json.Unmarshal([]byte(resp.Body), &ps)
 
 	return
 }
 
-func (client *CenterClient) broadcast(message string) error {
+func (client *CenterClient) Broadcast(message string) error {
 	m := &ipc.Message{Content: message}
 
 	b, err := json.Marshal(m)

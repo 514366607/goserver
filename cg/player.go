@@ -9,13 +9,12 @@ type Player struct {
 	Name  string
 	Level int
 	Exp   int
-	Room  int
 	mq    chan *ipc.Message //等待收取的消息
 }
 
 func NewPlayer() *Player {
 	m := make(chan *ipc.Message, 1024)
-	player := &Player{"", 0, 0, 0, m}
+	player := &Player{"", 0, 0, m}
 
 	go func(p *Player) {
 		for {

@@ -1,20 +1,53 @@
 package cg
 
 import (
-	"fmt"
+	// "fmt"
 	"gameserver/ipc"
 	"testing"
 )
 
+var centerClient *CenterClient
+
 func TestIpc(t *testing.T) {
-	server := NewCenterServer()
+	server := ipc.NewIpcServer(&CenterServer{})
+	client := ipc.NewIpcClient(server)
+	centerClient = &CenterClient{client}
 
-	fmt.Println(server.Name())
+	player := NewPlayer()
+	player.Name = "test"
+	player.Level = 1
+	player.Exp = 1
+	centerClient.AddPlayer(player)
 
-	var client = ipc.NewIpcClient(server)
+	player2 := NewPlayer()
+	player2.Name = "test2"
+	player2.Level = 1
+	player2.Exp = 1
+	centerClient.AddPlayer(player2)
 
-	// client.AddPlayer(NewPlayer())
-	// client.listPlayer("")
+	i_Res, err := centerClient.ListPlayer("")
+	if err != nil {
+		t.Error("AddPlayer ERROR!", err)
+	}
+
+	err = centerClient.RemovePlayer("test")
+	if err != nil {
+		t.Error("Remove Player ERROR!", err)
+	}
+
+	i_Res, err = centerClient.ListPlayer("")
+	if err != nil {
+		t.Error("AddPlayer ERROR!", err)
+	}
+
+	if len(i_Res) != 1 {
+		t.Error(" PlayerNumber != 1 ! ")
+	}
+
+	err = centerClient.RemovePlayer("test2")
+	if err != nil {
+		t.Error("Remove Player ERROR!", err)
+	}
 
 	// var client1 = NewIpcClient(server)
 	// var client2 = NewIpcClient(server)

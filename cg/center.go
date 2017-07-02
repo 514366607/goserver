@@ -3,6 +3,7 @@ package cg
 import (
 	"encoding/json"
 	"errors"
+	// "fmt"
 	"gameserver/ipc"
 	"sync"
 )
@@ -19,9 +20,9 @@ type CenterServer struct {
 
 //添加用户
 func (server *CenterServer) addPlayer(params string) error {
-	Player := NewPlayer()
+	player := NewPlayer()
 
-	err := json.Unmarshal([]byte(params), &Player)
+	err := json.Unmarshal([]byte(params), &player)
 	if err != nil {
 		return err
 	}
@@ -29,7 +30,9 @@ func (server *CenterServer) addPlayer(params string) error {
 	server.mutex.Lock()
 	defer server.mutex.Unlock()
 
-	server.players = append(server.players, Player) //没有判断重复登陆的情况
+	GlobalRoom.Join(player, "")
+
+	server.players = append(server.players, player) //没有判断重复登陆的情况
 	return nil
 }
 
@@ -45,14 +48,14 @@ func (server *CenterServer) removePlayer(params string) error {
 			} else if i == len(server.players)-1 {
 				server.players = server.players[:i]
 			} else if i == 0 {
-				server.players = server.players[i:]
+				server.players = server.players[1:]
 			} else {
 				server.players = append(server.players[:i-1], server.players[:i+1]...)
 			}
 			return nil
 		}
 	}
-	return errors.New("Plsyer not found.")
+	return errors.New("Player not found.")
 }
 
 //用户列表
@@ -74,6 +77,7 @@ func (server *CenterServer) broadcast(params string) error {
 		return err
 	}
 
+	GlobalRoom.mq <- &message
 	if len(server.players) > 0 {
 		for _, player := range server.players {
 			player.mq <- &message
